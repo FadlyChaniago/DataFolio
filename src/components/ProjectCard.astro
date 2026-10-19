@@ -1,0 +1,117 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Icon from './Icon.astro';
+
+interface Props {
+  project: CollectionEntry<'projects'>['data'];
+  variant?: 'default' | 'featured';
+  /** Heading level: h3 inside a section with an h2. */
+  headingLevel?: 'h2' | 'h3';
+  /** Eager-load the image (first visible row only). */
+  eager?: boolean;
+}
+
+const { project: p, variant = 'default', headingLevel = 'h3', eager = false } = Astro.props;
+const Heading = headingLevel;
+const isPrivate = p.status === 'private' || !p.projectUrl;
+const statusLabel = { live: 'Live', demo: 'Demo', archived: 'Archived', private: 'Private' }[p.status];
+const iso = p.publishedAt.toISOString().slice(0, 10);
+const searchText = [p.title, p.description, p.platform, p.category, ...p.tags].join(' ').toLowerCase();
+---
+<article
+  class:list={['df-card', { 'df-card--featured': variant === 'featured', 'df-card--static': isPrivate }]}
+  data-project
+  data-id={p.id}
+  data-title={p.title}
+  data-platform={p.platform}
+  data-category={p.category}
+  data-date={iso}
+  data-featured={p.featured ? 'true' : 'false'}
+  data-search={searchText}
+>
+  <div class="df-card__thumb">
+    <div class="df-card__fallback" role="img" aria-label={`No preview image for ${p.title}`}>
+      <strong>{p.platform}</strong>Preview unavailable
+    </div>
+    {
+      p.thumbnail && (
+        <img
+          src={p.thumbnail}
+          alt={`Screenshot of ${p.title}`}
+          width="1280"
+          height="720"
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+          data-thumb
+        />
+      )
+    }
+    <div class="df-card__flags">
+      <span class={`df-badge df-badge--status df-badge--${p.status}`}>{statusLabel}</span>
+      {variant !== 'featured' && p.featured && <span class="df-badge df-badge--featured">Featured</span>}
+    </div>
+  </div>
+
+  <div class="df-card__body">
+    <div class="df-card__meta">
+      <span class="df-badge">{p.platform}</span>
+      <span class="df-card__category">{p.category}</span>
+    </div>
+
+    <Heading class="df-card__title">
+      {
+        isPrivate ? (
+          p.title
+        ) : (
+          <a href={p.projectUrl} target="_blank" rel="noopener noreferrer">
+            {p.title}
+            <span class="df-sr-only"> (opens {p.platform} project in a new tab)</span>
+          </a>
+        )
+      }
+    </Heading>
+
+    <p class="df-card__desc">{p.description}</p>
+
+    {
+      p.tags.length > 0 && (
+        <ul class="df-card__tags" aria-label="Tags">
+          {p.tags.slice(0, 3).map((t) => <li>#{t}</li>)}
+        </ul>
+      )
+    }
+
+    <div class="df-card__footer">
+      {
+        isPrivate ? (
+          <span class="df-card__cta df-card__cta--off">
+            <Icon name="lock" />
+            Access restricted
+          </span>
+        ) : (
+          <span class="df-card__cta" aria-hidden="true">
+            View Project <Icon name="arrow-up-right" />
+          </span>
+        )
+      }
+      {
+        p.githubUrl && (
+          <a
+            class="df-link df-link--muted df-card__secondary"
+            href={p.githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Source code for ${p.title} (opens in a new tab)`}
+          >
+            <Icon name="git-branch" />
+            Source
+          </a>
+        )
+      }
+    </div>
+  </div>
+</article>
+
+<style>
+  .df-card__thumb img { position: relative; z-index: 0; background: var(--surface); }
+</style>

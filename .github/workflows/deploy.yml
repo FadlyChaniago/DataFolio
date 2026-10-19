@@ -1,0 +1,91 @@
+name: Deploy to VPS
+
+# Builds the site and uploads it to the VPS as a new release directory, then
+# atomically switches the `current` symlink. Nginx serves <DEPLOY_PATH>/current.
+#
+# Runs only when triggered manually, or on push to main once you set the repository
+# variable DEPLOY_ENABLED=true. Required secrets (Settings → Secrets → Actions):
+#   VPS_HOST          server hostname or IP
+#   VPS_USER          deploy user (no sudo needed; must own DEPLOY_PATH)
+#   VPS_SSH_KEY       private key for that user (ed25519 recommended)
+#   VPS_KNOWN_HOSTS   output of: ssh-keyscan -t ed25519 <VPS_HOST>
+# Optional secret/variable:
+#   VPS_PORT          SSH port (default 22)
+#   DEPLOY_PATH       variable, default /var/www/datafolio
+#   SITE_URL          variable, e.g. https://projects.example.org
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/var/www/datafolio' }}
+      SSH_PORT: ${{ secrets.VPS_PORT || '22' }}
+      KEEP_RELEASES: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Validate & build
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: npm run build
+
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName ${{ secrets.VPS_HOST }}
+            User ${{ secrets.VPS_USER }}
+            Port ${SSH_PORT}
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+          EOF
+
+      - name: Upload new release
+        run: |
+          RELEASE="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          echo "RELEASE=$RELEASE" >> "$GITHUB_ENV"
+          ssh vps "mkdir -p '$DEPLOY_PATH/releases/$RELEASE'"
+          # If a previous release exists, hard-link unchanged files from it (fast, low disk use).
+          rsync -az --delete \
+            --link-dest="$DEPLOY_PATH/current/" \
+            dist/ "vps:$DEPLOY_PATH/releases/$RELEASE/"
+
+      - name: Activate release (atomic symlink swap)
+        run: |
+          ssh vps "set -e
+            cd '$DEPLOY_PATH'
+            test -f 'releases/$RELEASE/index.html'
+            ln -sfn 'releases/$RELEASE' current.tmp
+            mv -Tf current.tmp current
+            ls -1dt releases/* | tail -n +$((KEEP_RELEASES + 1)) | xargs -r rm -rf
+            echo 'Active:' \$(readlink current)"
+
+      - name: Clean up key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

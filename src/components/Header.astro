@@ -1,0 +1,56 @@
+---
+import Icon from './Icon.astro';
+import { site } from '../data/site';
+
+interface Props {
+  showFeatured?: boolean;
+}
+const { showFeatured = true } = Astro.props;
+
+const links = [
+  { href: '#projects', label: 'Projects' },
+  ...(showFeatured ? [{ href: '#featured', label: 'Featured' }] : []),
+  { href: '#tools', label: 'Tech Stack' },
+];
+---
+<header class="df-header">
+  <div class="df-header__inner">
+    <a class="df-brand" href="/">
+      <span class="df-brand__name">{site.name}</span>
+      <span class="df-brand__sub">{site.subtitle}</span>
+    </a>
+
+    <nav class="df-nav" aria-label="Primary">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+      <a href={site.githubUrl} target="_blank" rel="noopener noreferrer">
+        GitHub <Icon name="arrow-up-right" size={14} />
+      </a>
+    </nav>
+
+    <div class="df-header__actions">
+      <button class="df-btn df-btn--ghost df-btn--icon df-theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark theme">
+        <Icon name="moon" class="df-icon--moon" />
+        <Icon name="sun" class="df-icon--sun" />
+      </button>
+      <button
+        class="df-btn df-btn--ghost df-btn--icon df-header__menu"
+        type="button"
+        data-menu-toggle
+        aria-label="Open menu"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+      >
+        <Icon name="menu" class="df-icon--menu" />
+        <Icon name="x" class="df-icon--close" />
+      </button>
+    </div>
+
+    <nav id="mobile-nav" class="df-mobile-panel" aria-label="Primary" hidden>
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+      <a href={site.githubUrl} target="_blank" rel="noopener noreferrer">
+        GitHub <Icon name="arrow-up-right" />
+      </a>
+    </nav>
+  </div>
+</header>
+

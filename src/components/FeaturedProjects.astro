@@ -1,0 +1,28 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ProjectCard from './ProjectCard.astro';
+
+interface Props {
+  projects: CollectionEntry<'projects'>['data'][];
+}
+const { projects } = Astro.props;
+---
+{
+  projects.length > 0 && (
+    <section id="featured" class="df-section" aria-labelledby="featured-title">
+      <div class="df-container">
+        <div class="df-section-head">
+          <div>
+            <h2 id="featured-title">Featured Projects</h2>
+            <p>Selected analytics projects and interactive dashboards.</p>
+          </div>
+        </div>
+        <div class="df-grid df-grid--featured">
+          {projects.map((p) => (
+            <ProjectCard project={p} variant="featured" eager />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

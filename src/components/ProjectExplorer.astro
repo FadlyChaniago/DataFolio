@@ -1,0 +1,107 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ProjectCard from './ProjectCard.astro';
+import Icon from './Icon.astro';
+import { site } from '../data/site';
+
+interface Props {
+  projects: CollectionEntry<'projects'>['data'][];
+}
+const { projects } = Astro.props;
+
+const countBy = (key: 'platform' | 'category') => {
+  const m = new Map<string, number>();
+  for (const p of projects) m.set(p[key], (m.get(p[key]) ?? 0) + 1);
+  return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+};
+const platforms = countBy('platform');
+const categories = countBy('category').sort((a, b) => a[0].localeCompare(b[0]));
+const total = projects.length;
+
+const sorts = [
+  { value: 'newest', label: 'Newest First' },
+  { value: 'oldest', label: 'Oldest First' },
+  { value: 'az', label: 'A–Z' },
+  { value: 'za', label: 'Z–A' },
+  { value: 'featured', label: 'Featured First' },
+];
+---
+<section id="projects" class="df-section" aria-labelledby="projects-title" data-explorer data-page-size={site.pageSize}>
+  <div class="df-container">
+    <div class="df-section-head">
+      <div>
+        <h2 id="projects-title">All Projects</h2>
+        <p>Explore dashboards, analytical tools, and data applications across multiple platforms.</p>
+      </div>
+    </div>
+
+    <div class="df-toolbar">
+      <div class="df-toolbar__row">
+        <div class="df-search" role="search">
+          <Icon name="search" />
+          <label for="project-search" class="df-sr-only">Search projects</label>
+          <input id="project-search" type="search" placeholder="Search projects..." autocomplete="off" spellcheck="false" data-filter="q" />
+          <kbd class="df-kbd" aria-hidden="true">/</kbd>
+        </div>
+
+        <span class="df-select">
+          <select aria-label="Filter by category" data-filter="category">
+            <option value="">All categories</option>
+            {categories.map(([c, n]) => <option value={c}>{c} ({n})</option>)}
+          </select>
+          <Icon name="chevron-down" />
+        </span>
+
+        <span class="df-select">
+          <select aria-label="Sort projects" data-filter="sort">
+            {sorts.map((s) => <option value={s.value}>{s.label}</option>)}
+          </select>
+          <Icon name="chevron-down" />
+        </span>
+      </div>
+
+      <div class="df-chips df-chips--scroll" role="group" aria-label="Filter by platform" data-platform-chips>
+        <button class="df-chip" type="button" aria-pressed="true" data-platform="">
+          All <span class="df-chip__count">{total}</span>
+        </button>
+        {
+          platforms.map(([name, n]) => (
+            <button class="df-chip" type="button" aria-pressed="false" data-platform={name}>
+              {name} <span class="df-chip__count">{n}</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="df-toolbar__status">
+        <p class="df-result-count" aria-live="polite" data-result-count>
+          Showing <strong>{total}</strong> of <strong>{total}</strong> projects
+        </p>
+        <button class="df-btn df-btn--ghost df-btn--sm" type="button" data-clear hidden>
+          <Icon name="x" /> Clear Filters
+        </button>
+      </div>
+    </div>
+
+    <div class="df-explorer__results">
+      <div class="df-grid" data-grid>
+        {projects.map((p, i) => <ProjectCard project={p} eager={i < 3} />)}
+      </div>
+
+      <div class="df-empty" role="status" data-empty hidden>
+        <span class="df-empty__icon" aria-hidden="true"><Icon name="search-x" /></span>
+        <h3>No projects match your search.</h3>
+        <p>Try a different keyword, or remove a platform or category filter.</p>
+        <button class="df-btn df-btn--secondary df-btn--sm" type="button" data-clear-empty>Clear Filters</button>
+      </div>
+
+      <div class="df-load-more" data-load-more-wrap hidden>
+        <button class="df-btn df-btn--secondary" type="button" data-load-more>Load More</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import '../scripts/project-explorer.js';
+</script>

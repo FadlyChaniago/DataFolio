@@ -1,0 +1,14 @@
+---
+interface Props {
+  projects: number;
+  platforms: number;
+  categories: number;
+}
+const { projects, platforms, categories } = Astro.props;
+const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
+---
+<dl class="df-stats" aria-label="Portfolio statistics">
+  <div><dt>{plural(projects, 'Project', 'Projects')}</dt><dd>{projects}</dd></div>
+  <div><dt>{plural(platforms, 'Platform', 'Platforms')}</dt><dd>{platforms}</dd></div>
+  <div><dt>{plural(categories, 'Category', 'Categories')}</dt><dd>{categories}</dd></div>
+</dl>

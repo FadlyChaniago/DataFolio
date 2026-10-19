@@ -1,0 +1,16 @@
+---
+import Icon from './Icon.astro';
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+<footer class="df-footer">
+  <div class="df-footer__inner">
+    <p>© {year} {site.name} · {site.subtitle}</p>
+    <nav aria-label="Footer">
+      <a class="df-link df-link--muted" href="#projects">Projects</a>
+      <a class="df-link df-link--muted" href={site.githubUrl} target="_blank" rel="noopener noreferrer">
+        GitHub <Icon name="arrow-up-right" size={14} />
+      </a>
+    </nav>
+  </div>
+</footer>

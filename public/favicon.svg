@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .bg { fill: #18181b; } .t { fill: #ffffff; } .t2 { fill: #71717a; }
+    @media (prefers-color-scheme: dark) { .bg { fill: #fafafa; } .t { fill: #18181b; } .t2 { fill: #a1a1aa; } }
+  </style>
+  <rect class="bg" width="32" height="32" rx="7"/>
+  <rect class="t" x="7" y="9" width="11" height="6" rx="1.5"/>
+  <rect class="t2" x="20" y="9" width="5" height="6" rx="1.5"/>
+  <rect class="t2" x="7" y="17" width="5" height="6" rx="1.5"/>
+  <rect class="t" x="14" y="17" width="11" height="6" rx="1.5"/>
+</svg>

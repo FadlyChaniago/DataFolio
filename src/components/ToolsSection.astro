@@ -1,0 +1,52 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { site } from '../data/site';
+
+interface Props {
+  projects: CollectionEntry<'projects'>['data'][];
+}
+const { projects } = Astro.props;
+
+const counts = new Map<string, number>();
+for (const p of projects) {
+  if (p.platform === 'Other') continue;
+  counts.set(p.platform, (counts.get(p.platform) ?? 0) + 1);
+}
+const platforms = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const supporting = site.supportingTools.filter((t) => !counts.has(t));
+---
+<section id="tools" class="df-section df-section--alt" aria-labelledby="tools-title">
+  <div class="df-container">
+    <div class="df-section-head">
+      <div>
+        <h2 id="tools-title">Tools &amp; Technologies</h2>
+        <p>Platforms used across the projects above, and the tools behind them.</p>
+      </div>
+    </div>
+
+    <div class="df-tools__group">
+      <p class="df-tools__label" id="tools-platforms">Project platforms</p>
+      <ul class="df-tools" aria-labelledby="tools-platforms">
+        {
+          platforms.map(([name, n]) => (
+            <li>
+              {name}
+              <span class="df-tools__count" aria-label={`${n} ${n === 1 ? 'project' : 'projects'}`}>{n}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    {
+      supporting.length > 0 && (
+        <div class="df-tools__group">
+          <p class="df-tools__label" id="tools-supporting">Supporting tools</p>
+          <ul class="df-tools" aria-labelledby="tools-supporting">
+            {supporting.map((t) => <li>{t}</li>)}
+          </ul>
+        </div>
+      )
+    }
+  </div>
+</section>

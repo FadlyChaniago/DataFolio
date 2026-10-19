@@ -1,0 +1,20 @@
+---
+interface Props {
+  showFeatured?: boolean;
+}
+const { showFeatured = true } = Astro.props;
+---
+<section class="df-hero" aria-labelledby="hero-title">
+  <p class="df-eyebrow">Data Analytics / Business Intelligence</p>
+  <h1 id="hero-title">Explore My Data Projects.</h1>
+  <p class="df-hero__lead">
+    A curated collection of interactive dashboards, analytics applications, and data visualization projects.
+  </p>
+  <div class="df-hero__actions">
+    <a class="df-btn df-btn--primary" href="#projects">Explore Projects</a>
+    {showFeatured && <a class="df-btn df-btn--secondary" href="#featured">Featured Work</a>}
+  </div>
+  <div class="df-hero__meta">
+    <slot />
+  </div>
+</section>

@@ -1,0 +1,29 @@
+name: Link check
+
+# Weekly health check of project URLs. Reports only — never edits or archives projects.
+on:
+  schedule:
+    - cron: '17 2 * * 1' # Mondays 02:17 UTC (09:17 WIB)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check project links
+        run: node scripts/check-links.mjs
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-report
+          path: link-report.md
+          retention-days: 30
